@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp API 测试平台</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            border-bottom-color: #25d366;
+            color: #25d366;
+        }
+
+        .tab:hover {
+            background: #f8f9fa;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #25d366;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .response {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .response.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .response.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .response pre {
+            background: rgba(0,0,0,0.1);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-indicator.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-indicator.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #25d366;
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fab fa-whatsapp"></i> WhatsApp API 测试平台</h1>
+            <p>测试和调试您的 WhatsApp Business API 集成</p>
+            <div class="status-indicator online" id="apiStatus">
+                <i class="fas fa-circle"></i>
+                API 连接正常
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('text')">文本消息</div>
+                <div class="tab" onclick="switchTab('image')">图片消息</div>
+                <div class="tab" onclick="switchTab('document')">文档消息</div>
+                <div class="tab" onclick="switchTab('template')">模板消息</div>
+                <div class="tab" onclick="switchTab('status')">消息状态</div>
+            </div>
+
+            <!-- 文本消息 -->
+            <div class="tab-content active" id="text">
+                <h2>发送文本消息</h2>
+                <form id="textForm">
+                    <div class="form-group">
+                        <label for="textTo">接收者号码 (格式: 1234567890@c.us)</label>
+                        <input type="text" id="textTo" placeholder="例如: 1234567890@c.us" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="textMessage">消息内容</label>
+                        <textarea id="textMessage" placeholder="输入您要发送的消息..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn">
+                        <i class="fas fa-paper-plane"></i>
+                        发送文本消息
+                    </button>
+                </form>
+            </div>
+
+            <!-- 图片消息 -->
+            <div class="tab-content" id="image">
+                <h2>发送图片消息</h2>
+                <form id="imageForm">
+                    <div class="form-group">
+                        <label for="imageTo">接收者号码 (格式: 1234567890@c.us)</label>
+                        <input type="text" id="imageTo" placeholder="例如: 1234567890@c.us" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="imageUrl">图片URL</label>
+                        <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="imageCaption">图片说明 (可选)</label>
+                        <input type="text" id="imageCaption" placeholder="图片说明...">
+                    </div>
+                    <button type="submit" class="btn">
+                        <i class="fas fa-image"></i>
+                        发送图片消息
+                    </button>
+                </form>
+            </div>
+
+            <!-- 文档消息 -->
+            <div class="tab-content" id="document">
+                <h2>发送文档消息</h2>
+                <form id="documentForm">
+                    <div class="form-group">
+                        <label for="documentTo">接收者号码 (格式: 1234567890@c.us)</label>
+                        <input type="text" id="documentTo" placeholder="例如: 1234567890@c.us" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="documentUrl">文档URL</label>
+                        <input type="url" id="documentUrl" placeholder="https://example.com/document.pdf" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="documentFilename">文件名</label>
+                        <input type="text" id="documentFilename" placeholder="document.pdf" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="documentCaption">文档说明 (可选)</label>
+                        <input type="text" id="documentCaption" placeholder="文档说明...">
+                    </div>
+                    <button type="submit" class="btn">
+                        <i class="fas fa-file"></i>
+                        发送文档消息
+                    </button>
+                </form>
+            </div>
+
+            <!-- 模板消息 -->
+            <div class="tab-content" id="template">
+                <h2>发送模板消息</h2>
+                <form id="templateForm">
+                    <div class="form-group">
+                        <label for="templateTo">接收者号码 (格式: 1234567890@c.us)</label>
+                        <input type="text" id="templateTo" placeholder="例如: 1234567890@c.us" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="templateName">模板名称</label>
+                        <input type="text" id="templateName" placeholder="例如: hello_world" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="templateLanguage">语言代码</label>
+                        <input type="text" id="templateLanguage" placeholder="zh_CN" value="zh_CN">
+                    </div>
+                    <button type="submit" class="btn">
+                        <i class="fas fa-layer-group"></i>
+                        发送模板消息
+                    </button>
+                </form>
+            </div>
+
+            <!-- 消息状态 -->
+            <div class="tab-content" id="status">
+                <h2>查询消息状态</h2>
+                <form id="statusForm">
+                    <div class="form-group">
+                        <label for="messageId">消息ID</label>
+                        <input type="text" id="messageId" placeholder="输入消息ID..." required>
+                    </div>
+                    <button type="submit" class="btn">
+                        <i class="fas fa-search"></i>
+                        查询状态
+                    </button>
+                </form>
+            </div>
+
+            <!-- 响应区域 -->
+            <div class="response" id="response"></div>
+
+            <!-- API信息 -->
+            <div class="grid">
+                <div class="card">
+                    <h3><i class="fas fa-info-circle"></i> API 信息</h3>
+                    <p>基础URL: <code>/api/whatsapp</code></p>
+                    <p>健康检查: <code>/api/whatsapp/health</code></p>
+                    <p>Webhook: <code>/api/whatsapp/webhook</code></p>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-lightbulb"></i> 使用提示</h3>
+                    <p>• 确保已正确配置环境变量</p>
+                    <p>• 电话号码格式必须为: 1234567890@c.us</p>
+                    <p>• 图片和文档URL必须是公开可访问的</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 切换标签页
+        function switchTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有标签的活动状态
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 显示选中的标签内容
+            document.getElementById(tabName).classList.add('active');
+            
+            // 激活选中的标签
+            event.target.classList.add('active');
+        }
+
+        // 显示响应
+        function showResponse(success, message, data = null) {
+            const responseDiv = document.getElementById('response');
+            responseDiv.className = `response ${success ? 'success' : 'error'}`;
+            
+            let content = `<strong>${message}</strong>`;
+            if (data) {
+                content += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            
+            responseDiv.innerHTML = content;
+            responseDiv.style.display = 'block';
+            
+            // 滚动到响应区域
+            responseDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 发送API请求
+        async function sendRequest(endpoint, data) {
+            try {
+                const response = await fetch(`/api/whatsapp${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                return { success: response.ok, data: result };
+            } catch (error) {
+                return { success: false, data: { error: error.message } };
+            }
+        }
+
+        // 获取消息状态
+        async function getMessageStatus(messageId) {
+            try {
+                const response = await fetch(`/api/whatsapp/message/${messageId}/status`);
+                const result = await response.json();
+                return { success: response.ok, data: result };
+            } catch (error) {
+                return { success: false, data: { error: error.message } };
+            }
+        }
+
+        // 检查API状态
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/api/whatsapp/health');
+                const result = await response.json();
+                
+                const statusIndicator = document.getElementById('apiStatus');
+                if (result.success) {
+                    statusIndicator.className = 'status-indicator online';
+                    statusIndicator.innerHTML = '<i class="fas fa-circle"></i> API 连接正常';
+                } else {
+                    statusIndicator.className = 'status-indicator offline';
+                    statusIndicator.innerHTML = '<i class="fas fa-circle"></i> API 连接异常';
+                }
+            } catch (error) {
+                const statusIndicator = document.getElementById('apiStatus');
+                statusIndicator.className = 'status-indicator offline';
+                statusIndicator.innerHTML = '<i class="fas fa-circle"></i> API 连接失败';
+            }
+        }
+
+        // 表单提交事件
+        document.getElementById('textForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const to = document.getElementById('textTo').value;
+            const text = document.getElementById('textMessage').value;
+            
+            const result = await sendRequest('/send/text', { to, text });
+            showResponse(result.success, result.data.message, result.data);
+        });
+
+        document.getElementById('imageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const to = document.getElementById('imageTo').value;
+            const imageUrl = document.getElementById('imageUrl').value;
+            const caption = document.getElementById('imageCaption').value;
+            
+            const result = await sendRequest('/send/image', { to, imageUrl, caption });
+            showResponse(result.success, result.data.message, result.data);
+        });
+
+        document.getElementById('documentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const to = document.getElementById('documentTo').value;
+            const documentUrl = document.getElementById('documentUrl').value;
+            const filename = document.getElementById('documentFilename').value;
+            const caption = document.getElementById('documentCaption').value;
+            
+            const result = await sendRequest('/send/document', { to, documentUrl, filename, caption });
+            showResponse(result.success, result.data.message, result.data);
+        });
+
+        document.getElementById('templateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const to = document.getElementById('templateTo').value;
+            const templateName = document.getElementById('templateName').value;
+            const languageCode = document.getElementById('templateLanguage').value;
+            
+            const result = await sendRequest('/send/template', { to, templateName, languageCode });
+            showResponse(result.success, result.data.message, result.data);
+        });
+
+        document.getElementById('statusForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageId = document.getElementById('messageId').value;
+            
+            const result = await getMessageStatus(messageId);
+            showResponse(result.success, result.data.message, result.data);
+        });
+
+        // 页面加载时检查API状态
+        document.addEventListener('DOMContentLoaded', () => {
+            checkApiStatus();
+            // 每30秒检查一次API状态
+            setInterval(checkApiStatus, 30000);
+        });
+    </script>
+</body>
+</html>
