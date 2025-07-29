@@ -11,12 +11,65 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
+
+      - name: Check for package.json
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "package.json")) {
+            Write-Host "❌ ERROR: package.json not found in root directory" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "📋 SETUP INSTRUCTIONS:" -ForegroundColor Yellow
+            Write-Host "To set up this Electron app, you need to create a package.json file in the root directory." -ForegroundColor White
+            Write-Host ""
+            Write-Host "Example package.json for Electron app:" -ForegroundColor Cyan
+            Write-Host @"
+          {
+            "name": "meilian-fashion-electron",
+            "version": "1.0.0",
+            "description": "Meilian Fashion Electron Desktop App",
+            "main": "main.js",
+            "scripts": {
+              "start": "electron .",
+              "build": "electron-builder",
+              "dist": "electron-builder --win",
+              "pack": "electron-builder --dir"
+            },
+            "devDependencies": {
+              "electron": "^latest",
+              "electron-builder": "^latest"
+            },
+            "build": {
+              "appId": "com.meilian.fashion",
+              "productName": "Meilian Fashion",
+              "directories": {
+                "output": "dist"
+              },
+              "files": [
+                "**/*",
+                "!whatsapp-api/node_modules/**/*"
+              ],
+              "win": {
+                "target": "nsis",
+                "icon": "icon.ico"
+              }
+            }
+          }
+          "@ -ForegroundColor White
+            Write-Host ""
+            Write-Host "After creating package.json, run:" -ForegroundColor Yellow
+            Write-Host "  npm install" -ForegroundColor Cyan
+            Write-Host "  npm run dist" -ForegroundColor Cyan
+            Write-Host ""
+            exit 1
+          } else {
+            Write-Host "✅ package.json found - proceeding with build" -ForegroundColor Green
+          }
 
       - name: Install dependencies
         run: npm install
